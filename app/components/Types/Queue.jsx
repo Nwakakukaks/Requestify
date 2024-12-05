@@ -7,11 +7,6 @@ import TransactionAccordion from "../test/TransactionAccordion";
 
 function Queue({ transactions, address, activeTab }) {
   const router = useRouter();
-  console.log(transactions);
-
-  useEffect(() => {
-    console.log(transactions);
-  }, [transactions]);
 
   return (
     <div style={{ backgroundColor: "#f4f4f4" }}>

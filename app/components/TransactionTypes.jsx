@@ -12,7 +12,7 @@ import { currencies } from "@/hooks/currency";
 import { storageChains } from "@/hooks/storage-chain";
 import Queue from "./Types/Queue";
 import History from "./Types/History";
-import InitiateTransaction from "./Modal/InitiateTransaction";
+import InitiateTransaction from "./Modal/ThirdParty";
 import Link from "next/link";
 import { Send } from "lucide-react";
 
@@ -44,57 +44,115 @@ const TransactionTypes = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    const checkRequestCompletion = async (requestClient, requestId) => {
+      try {
+        const request = await requestClient.fromRequestId(requestId);
+        let requestData = request.getData();
+  
+        // Polling mechanism to check request completion
+        while (
+          requestData.balance?.balance === undefined || 
+          parseFloat(requestData.balance.balance) < parseFloat(requestData.expectedAmount)
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
+          requestData = await request.refresh();
+        }
+  
+        return true;
+      } catch (error) {
+        console.error(`Error checking request ${requestId}:`, error);
+        return false;
+      }
+    };
+  
     const fetchRequests = async () => {
       if (!address) return;
-
+  
       const selectedCurrency = currencies.get(currency);
       const selectedStorageChain = storageChains.get(storageChain);
-
+  
       if (!selectedCurrency || !selectedStorageChain) {
         toast.error("Invalid currency or storage chain configuration");
         return;
       }
-
+  
       try {
         setIsLoading(true);
-
+  
         const requestClient = new RequestNetwork({
           nodeConnectionConfig: {
             baseURL: selectedStorageChain.gateway,
           },
         });
-
+  
         const identityAddress = address;
         const requestsResponse = await requestClient.fromIdentity({
           type: Types.Identity.TYPE.ETHEREUM_ADDRESS,
           value: identityAddress,
         });
-
-        const transformedRequests = requestsResponse.map((request) => {
-          const data = request.getData();
-          return {
-            requestId: data.requestId,
-            contentData: data.extensions["content-data"]?.values || {},
-            state: data.state,
-            creator: data.creator,
-            payee: data.payee,
-            expectedAmount: data.expectedAmount,
-            currency: data.currency,
-            timestamp: data.timestamp,
-            events: data.events,
-          };
-        });
-
-        const queue = transformedRequests.filter(
-          (request) => request.state === "created"
+  
+        const transformedRequests = await Promise.all(
+          requestsResponse.map(async (requestItem) => {
+            const initialData = requestItem.getData();
+            
+            try {
+              const request = await requestClient.fromRequestId(initialData.requestId);
+              let requestData = request.getData();
+  
+              // Check if the request is completed
+              const isCompleted = 
+                requestData.balance?.balance !== undefined && 
+                parseFloat(requestData.balance.balance) >= parseFloat(requestData.expectedAmount);
+  
+              return {
+                requestId: initialData.requestId,
+                contentData: initialData.extensions["content-data"]?.values || {},
+                state: initialData.state,
+                creator: initialData.creator,
+                payee: initialData.payee,
+                expectedAmount: initialData.expectedAmount,
+                currency: initialData.currency,
+                timestamp: initialData.timestamp,
+                events: initialData.events,
+                isCompleted: isCompleted,
+                balance: requestData.balance?.balance
+              };
+            } catch (error) {
+              console.error(`Error processing request ${initialData.requestId}:`, error);
+              return null;
+            }
+          })
         );
-        const completed = transformedRequests.filter(
-          (request) => request.state === "completed"
+  
+        // Filter out any null results and sort
+        const validRequests = transformedRequests.filter(request => request !== null);
+        const sortedRequests = validRequests.sort((a, b) => 
+          new Date(b.timestamp) - new Date(a.timestamp)
         );
-
-        
+  
+        const queue = sortedRequests.filter(
+          (request) => request.state === "created" && !request.isCompleted
+        );
+        const completed = sortedRequests.filter(
+          (request) => request.isCompleted
+        );
+  
+      
+        for (const request of queue) {
+          const isFullyCompleted = await checkRequestCompletion(
+            requestClient, 
+            request.requestId
+          );
+  
+          if (isFullyCompleted) {
+            queue.splice(queue.indexOf(request), 1);
+            completed.push(request);
+          }
+        }
+  
         setQueueRequests(queue);
         setCompletedRequests(completed);
+        console.log(queue, completed)
       } catch (error) {
         console.error("Failed to fetch requests:", error);
         toast.error("Failed to fetch requests");
@@ -102,7 +160,7 @@ const TransactionTypes = () => {
         setIsLoading(false);
       }
     };
-
+  
     fetchRequests();
   }, [address, activeTab]);
 

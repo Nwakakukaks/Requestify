@@ -4,7 +4,7 @@ const Header = dynamic(() => import("../components/header/Header"), {
   ssr: false,
 });
 const SendRequest = dynamic(
-  () => import("../components/sendRequest/SendRequest"),
+  () => import("../components/sendRequest/CreateRequest"),
   {
     ssr: false,
   }

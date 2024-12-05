@@ -9,7 +9,7 @@ function History({ transactions }) {
   return (
     <div style={{ backgroundColor: "#f4f4f4" }}>
       <main>
-        <TransactionAccordion transactions={transactions} />
+        <TransactionAccordion transactions={transactions} isCompleted={true} />
       </main>
     </div>
   );

@@ -8,7 +8,21 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { styled } from "@mui/material/styles";
 import { Grid } from "@mui/material";
 import { ToastContainer, toast } from "react-toastify";
-import { useAccount } from "wagmi";
+import { Button } from "../ui/button";
+import { useAccount, useNetwork, useWalletClient } from "wagmi";
+import { RequestNetwork, Types } from "@requestnetwork/request-client.js";
+import {
+  payRequest,
+  hasSufficientFunds,
+  hasErc20Approval,
+  approveErc20,
+} from "@requestnetwork/payment-processor";
+import { Web3SignatureProvider } from "@requestnetwork/web3-signature";
+import { useEthersV5Signer } from "@/hooks/use-ethers-signer";
+import { useEthersV5Provider } from "@/hooks/use-ethers-provider";
+import { currencies } from "@/hooks/currency";
+import { storageChains } from "@/hooks/storage-chain";
+import { useToast } from "../ui/use-toast";
 
 const CustomAccordion = styled(Accordion)({
   margin: "10px 0",
@@ -60,46 +74,183 @@ const CustomGridItem = styled(Grid)({
   alignItems: "center",
 });
 
-const TransactionAccordion = ({ transactions }) => {
+const TransactionAccordion = ({ transactions, isCompleted }) => {
+  const { chain } = useNetwork();
+  const provider = useEthersV5Provider();
+  const signer = useEthersV5Signer();
+  const [storageChain] = useState(() => {
+    const chains = Array.from(storageChains.keys());
+    return chains.length > 0 ? chains[0] : "";
+  });
+  const { toast } = useToast();
   const { address } = useAccount();
-  const [loading, setLoading] = useState(true); // Loading state
+  const { data: walletClient } = useWalletClient();
+
+  const [currency] = useState(() => {
+    const currencyKeys = Array.from(currencies.keys());
+    return currencyKeys.length > 0 ? currencyKeys[0] : "";
+  });
+  const [loading, setLoading] = useState(false);
+  const [isloading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setLoading(false); // Set loading to false after 3 seconds
-    }, 3000);
+      setIsLoading(false);
+    }, 2000);
 
-    // Cleanup the timeout on component unmount
     return () => clearTimeout(timer);
   }, []);
 
   const getStatusLabel = (request) => {
-    // Determine status based on state and events
     switch (request.state) {
       case "created":
         return "Pending";
-      case "completed":
-        return "Completed";
       default:
-        return request.state;
+        return "Completed";
+    }
+  };
+  
+
+  const handleRequestAction = async (request) => {
+    console.log("Starting payTheRequest function");
+
+    if (!request.requestId) {
+      console.error("No request ID found");
+      toast({
+        title: "Error",
+        description: "No request found to pay",
+      });
+      return;
+    }
+
+    const selectedCurrency = currencies.get(currency);
+    const selectedStorageChain = storageChains.get(storageChain);
+
+    if (!selectedCurrency || !selectedStorageChain) {
+      console.error("Invalid currency or storage chain configuration", {
+        currency,
+        storageChain,
+      });
+      toast({
+        title: "Configuration Error",
+        description: "Invalid currency or storage chain configuration",
+        variant: "destructive",
+      });
+      return null;
+    }
+
+    try {
+      setLoading(true);
+      console.log("Setting up signature provider and request client");
+
+      const signatureProvider = new Web3SignatureProvider(walletClient);
+      const requestClient = new RequestNetwork({
+        nodeConnectionConfig: {
+          baseURL: selectedStorageChain.gateway,
+        },
+        signatureProvider,
+      });
+
+      const myrequest = await requestClient.fromRequestId(request.requestId);
+      const requestData = myrequest.getData();
+
+      console.log("Request data retrieved:", {
+        network: requestData.currencyInfo.network,
+        expectedAmount: requestData.expectedAmount,
+        currency: requestData.currency,
+      });
+
+      if (!requestData.expectedAmount || requestData.expectedAmount === "0") {
+        console.error("Invalid amount for payment");
+        toast({
+          title: "Payment Error",
+          description: "Invalid payment amount",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (requestData.currencyInfo.network !== chain?.network) {
+        console.error("Network mismatch", {
+          requestNetwork: requestData.currencyInfo.network,
+          currentNetwork: chain?.network,
+        });
+        toast({
+          title: "Network Mismatch",
+          description: `Please switch to ${requestData.currencyInfo.network}`,
+        });
+        setLoading(false);
+        return;
+      }
+
+      console.log("Checking for sufficient funds");
+      const hasFunds = await hasSufficientFunds({
+        request: requestData,
+        address: address,
+        providerOptions: {
+          provider: provider,
+        },
+      });
+
+      if (!hasFunds) {
+        console.error("Insufficient funds for the request");
+        toast({
+          title: "Insufficient Funds",
+          description: "You do not have enough funds to pay this request",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // console.log("Checking ERC20 approval");
+      // const _hasErc20Approval = await hasErc20Approval(
+      //   requestData,
+      //   address,
+      //   provider
+      // );
+      // if (!_hasErc20Approval) {
+      //   console.log("Requesting ERC20 approval");
+      //   const approvalTx = await approveErc20(requestData, signer);
+      //   await approvalTx.wait(2);
+      //   console.log("ERC20 approval transaction completed");
+      // }
+
+      console.log("Paying the request");
+      const paymentTx = await payRequest(requestData, signer);
+      await paymentTx.wait(2);
+
+      if (paymentTx.hash) {
+        toast({
+          title: "Payment Success",
+          description: `Payment successful, transaction hash: ${paymentTx.hash}`,
+        });
+        console.log(`Payment successful, transaction hash: ${paymentTx.hash}`);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Comprehensive payment error:", error);
+      toast({
+        title: "Error",
+        description: "An error occurred while processing the payment",
+        variant: "destructive",
+      });
+      setLoading(false);
     }
   };
 
-  const handleRequestAction = async (request) => {
-    // Implement request-specific actions
-    try {
-      // Example action - you'd replace this with actual request processing logic
-      console.log("Processing request:", request.requestId);
-    } catch (error) {
-      console.error("Failed to process request:", error);
-      toast.error("Failed to process request");
+  function shortenEthereumAddress(address) {
+    if (!/^0x[0-9a-fA-F]{40}$/.test(address)) {
+      throw new Error("Invalid Ethereum address");
     }
-  };
+    return address.slice(0, 6) + "..." + address.slice(-4);
+  }
 
   return (
     <div className="accordian-parent">
-      {loading ? (
-        <div className="text-black">Loading requests...</div> // Show loading text
+      {isloading ? (
+        <div className="text-black">Loading requests...</div>
       ) : transactions.length === 0 ? (
         <CustomAccordion>
           <CustomAccordionSummary>
@@ -130,12 +281,13 @@ const TransactionAccordion = ({ transactions }) => {
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={2} md={2}>
                   <div className="senderOrReceiverOnAccordian">
-                    {request.contentData.RequestType || "Unknown Type"}
+                    {request.contentData.content.RequestType || "Unknown Type"}
                   </div>
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={2} md={2}>
                   <div style={{ fontWeight: "700" }}>
-                    {request.contentData.RequestTitle || "Untitled Request"}
+                    {request.contentData.content.RequestTitle ||
+                      "Untitled Request"}
                   </div>
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={2} md={2}>
@@ -145,57 +297,120 @@ const TransactionAccordion = ({ transactions }) => {
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={1} md={1}>
                   <div className="accordian-txn-status">
-                    {getStatusLabel(request)}
+                  {isCompleted ? "Completed" : "Pending"}
+                  
                   </div>
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={2} md={2}>
-                  <button
+                  <Button
                     className={`action-btn ${
                       request.state === "completed"
                         ? "completed-action-btn"
                         : "waiting-action-btn"
                     }`}
-                    onClick={() => handleRequestAction(request)}
-                    disabled={
-                      address !== request.contentData.signer1 ||
-                      request.contentData.signer2
-                    }
                   >
-                    {request.state === "completed" ? "Completed" : "Sign"}
-                  </button>
+                     {isCompleted ? "Closed" : "Sign"}
+                  </Button>
                 </CustomGridItem>
               </Grid>
             </CustomAccordionSummary>
             <CustomAccordionDetails>
-              <div className="flex-col justify-start items-start">
-                <p className="text-start text-sm text-gray-700 mb-1">
-                  Creator: {request.creator.value}
-                </p>
-                <p className="text-start text-sm text-gray-700 mb-1">
-                  Payee: {request.payee.value}
-                </p>
-                <p className="text-start text-sm text-gray-700 mb-1">
-                  Amount: {request.expectedAmount} {request.currency}
-                </p>
-                <p className="text-start text-sm text-gray-700 mb-1">
-                  Required Signers: {request.contentData.signer1},{" "}
-                  {request.contentData.signer2}
-                </p>
+              <div className="bg-white shadow-md rounded-lg p-4 space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">
+                      Creator
+                    </label>
+                    <p className="text-sm text-gray-800 bg-gray-50 py-1 px-2 rounded">
+                      {shortenEthereumAddress(request.creator.value)}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">
+                      Payee
+                    </label>
+                    <p className="text-sm text-gray-800 bg-gray-50 py-1 px-2 rounded">
+                      {shortenEthereumAddress(request.payee.value)}
+                    </p>
+                  </div>
+                </div>
 
-                {request.events.map((event, idx) => (
-                  <p
-                    className="text-start text-sm text-gray-700 mb-1"
-                    key={idx}
-                  >
-                    {event.name} by {event.actionSigner.value} at{" "}
-                    {new Date(event.timestamp * 1000).toLocaleString()}
-                  </p>
-                ))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">
+                      Amount
+                    </label>
+                    <p className="text-sm text-green-600 font-semibold bg-green-50 py-1 px-2 rounded">
+                      {request.expectedAmount / Math.pow(10, 18)}{" "}
+                      {request.currency}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold text-gray-500">
+                      Required Signer
+                    </label>
+                    <p className="text-sm text-gray-800 bg-gray-50 py-1 px-2 rounded">
+                      {request.contentData.content.signer1
+                        ? shortenEthereumAddress(
+                            request.contentData.content.signer1.value
+                          )
+                        : "None"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold text-gray-500">
+                    Memo
+                  </label>
+                  <div className="bg-blue-50 p-3 rounded-lg border-l-4 border-blue-500">
+                    <p className="text-sm text-gray-800 break-words">
+                      {request.contentData.content.RequestMemo}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="text-xs font-semibold text-gray-500">
+                    Transaction Events
+                  </h3>
+                  <div className="divide-y divide-gray-100 bg-gray-50 rounded-lg">
+                    {request.events.map((event, idx) => (
+                      <div key={idx} className="px-3 py-2">
+                        <p className="text-xs text-gray-600">
+                          <span className="font-medium">{event.name}d</span> by{" "}
+                          {shortenEthereumAddress(event.actionSigner.value)}
+                          <span className="text-gray-500 ml-2">
+                            {new Date(event.timestamp * 1000).toLocaleString()}
+                          </span>
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <Button
+                  className={` w-full mt-5`}
+                  onClick={() => handleRequestAction(request)}
+                  disabled={
+                    (address !==
+                      request?.contentData?.content?.signer1?.value ??
+                      "") &&
+                    (address !== request?.payer?.value ?? "") || isCompleted
+                  }
+                >
+                  {isCompleted
+                    ? "Request completed and closed ☑️"
+                    : loading
+                    ? "Signing.."
+                    : "Sign Request"}
+                </Button>
               </div>
             </CustomAccordionDetails>
           </CustomAccordion>
         ))
       )}
+
       <ToastContainer />
     </div>
   );
