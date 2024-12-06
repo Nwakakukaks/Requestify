@@ -19,6 +19,29 @@ import { parseUnits, zeroAddress } from "viem";
 import { currencies } from "@/hooks/currency";
 import { storageChains } from "@/hooks/storage-chain";
 import { Textarea } from "../ui/textarea";
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
+
+const CLOUD_NAME = "your_cloud_name";
+const UPLOAD_PRESET = "your_upload_preset";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+
+const uploadToCloudinary = async (file: File) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("resource_type", "raw");
+
+    const headers = { ...formData.getHeaders() };
+
+    const response = await axios.post(CLOUDINARY_URL, formData, { headers });
+    return response.data.url;
+  } catch (error) {
+    throw new Error("Failed to upload attachment to Cloudinary");
+  }
+};
 
 const ThirdPartyRequest: React.FC = () => {
   const { address, isDisconnected } = useAccount();
@@ -26,11 +49,12 @@ const ThirdPartyRequest: React.FC = () => {
 
   const [creator, setCreator] = useState(address || "");
   const [payee, setPayee] = useState("");
-  const [requestTitle, setRequestTitle] = useState('')
-  const [requestMemo, setRequestMemo] = useState('')
+  const [requestTitle, setRequestTitle] = useState("");
+  const [requestMemo, setRequestMemo] = useState("");
   const [signer1, setSigner1] = useState("");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [currency, setCurrency] = useState(() => {
     const currencyKeys = Array.from(currencies.keys());
     return currencyKeys.length > 0 ? currencyKeys[0] : "";
@@ -75,6 +99,12 @@ const ThirdPartyRequest: React.FC = () => {
     return errors;
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAttachment(e.target.files[0]);
+    }
+  };
+
   const createRequest = async () => {
     const validationErrors = validateInputs();
     if (validationErrors.length > 0) {
@@ -107,6 +137,20 @@ const ThirdPartyRequest: React.FC = () => {
       return;
     }
 
+    let attachmentUrl = null;
+    if (attachment) {
+      try {
+        attachmentUrl = await uploadToCloudinary(attachment);
+      } catch (error) {
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload attachment",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
       const signatureProvider = new Web3SignatureProvider(walletClient);
@@ -132,7 +176,7 @@ const ThirdPartyRequest: React.FC = () => {
             type: Types.Identity.TYPE.ETHEREUM_ADDRESS,
             value: payee,
           },
-        
+
           timestamp: Utils.getCurrentTimestampInSecond(),
         },
         paymentNetwork: {
@@ -145,9 +189,10 @@ const ThirdPartyRequest: React.FC = () => {
           },
         },
         contentData: {
-          RequestType: 'Third-Party',
+          RequestType: "Third-Party",
           RequestTitle: requestTitle,
           RequestMemo: requestMemo,
+          Attachment: attachmentUrl,
           creator: {
             type: Types.Identity.TYPE.ETHEREUM_ADDRESS,
             value: creator,
@@ -227,6 +272,17 @@ const ThirdPartyRequest: React.FC = () => {
                 value={requestTitle}
                 onChange={(e) => setRequestTitle(e.target.value)}
                 placeholder="Enter request Title"
+                disabled={isDisconnected}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Upload Document (Optional)
+              </label>
+              <Input
+                type="file"
+                onChange={handleFileChange}
                 disabled={isDisconnected}
               />
             </div>
@@ -317,6 +373,8 @@ const ThirdPartyRequest: React.FC = () => {
                 ))}
               </select>
             </div>
+
+           
 
             <Button
               onClick={createRequest}

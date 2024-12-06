@@ -19,6 +19,29 @@ import { parseUnits, zeroAddress } from "viem";
 import { currencies } from "@/hooks/currency";
 import { storageChains } from "@/hooks/storage-chain";
 import { Textarea } from "../ui/textarea";
+import axios from "axios";
+import FormData from "form-data";
+import fs from "fs";
+
+const CLOUD_NAME = "your_cloud_name";
+const UPLOAD_PRESET = "your_upload_preset";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+
+const uploadToCloudinary = async (file: File) => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+    formData.append("resource_type", "raw");
+
+    const headers = { ...formData.getHeaders() };
+
+    const response = await axios.post(CLOUDINARY_URL, formData, { headers });
+    return response.data.url;
+  } catch (error) {
+    throw new Error("Failed to upload attachment to Cloudinary");
+  }
+};
 
 const SinglePartyRequest: React.FC = () => {
   const { address, isDisconnected } = useAccount();
@@ -31,6 +54,7 @@ const SinglePartyRequest: React.FC = () => {
   const [payer, setPayer] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [amount, setAmount] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [currency, setCurrency] = useState(() => {
     const currencyKeys = Array.from(currencies.keys());
     return currencyKeys.length > 0 ? currencyKeys[0] : "";
@@ -47,28 +71,22 @@ const SinglePartyRequest: React.FC = () => {
 
   const validateInputs = () => {
     const errors: string[] = [];
-
-    if (!isValidEthereumAddress(creator)) {
+    if (!isValidEthereumAddress(creator))
       errors.push("Invalid creator Ethereum address");
-    }
-
-    if (!isValidEthereumAddress(payee)) {
+    if (!isValidEthereumAddress(payee))
       errors.push("Invalid payee Ethereum address");
-    }
-
-    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+    if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0)
       errors.push("Invalid amount");
-    }
-
-    if (!currency || !currencies.has(currency)) {
-      errors.push("Invalid currency");
-    }
-
-    if (!storageChain || !storageChains.has(storageChain)) {
+    if (!currency || !currencies.has(currency)) errors.push("Invalid currency");
+    if (!storageChain || !storageChains.has(storageChain))
       errors.push("Invalid storage chain");
-    }
-
     return errors;
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAttachment(e.target.files[0]);
+    }
   };
 
   const createRequest = async () => {
@@ -101,6 +119,20 @@ const SinglePartyRequest: React.FC = () => {
         variant: "destructive",
       });
       return;
+    }
+
+    let attachmentUrl = null;
+    if (attachment) {
+      try {
+        attachmentUrl = await uploadToCloudinary(attachment);
+      } catch (error) {
+        toast({
+          title: "Upload Error",
+          description: "Failed to upload attachment",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -148,6 +180,7 @@ const SinglePartyRequest: React.FC = () => {
           RequestType: "Single-Party",
           RequestTitle: requestTitle,
           RequestMemo: requestMemo,
+          Attachment: attachmentUrl,
           creator: {
             type: Types.Identity.TYPE.ETHEREUM_ADDRESS,
             value: creator,
@@ -171,7 +204,6 @@ const SinglePartyRequest: React.FC = () => {
       });
 
       setIsLoading(false);
-
       return confirmedRequestData.requestId;
     } catch (err) {
       console.error("Error in createRequest:", err);
@@ -230,6 +262,17 @@ const SinglePartyRequest: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
+              Upload Document (Optional)
+              </label>
+              <Input
+                type="file"
+                onChange={handleFileChange}
+                disabled={isDisconnected}
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
                 Request Memo
               </label>
               <Textarea
@@ -259,7 +302,7 @@ const SinglePartyRequest: React.FC = () => {
               </label>
               <Input
                 type="text"
-                value={payee}
+                value={payer}
                 onChange={(e) => setPayer(e.target.value)}
                 placeholder="Enter payer address"
                 disabled={isDisconnected}
@@ -314,6 +357,8 @@ const SinglePartyRequest: React.FC = () => {
                 ))}
               </select>
             </div>
+
+          
 
             <Button
               onClick={createRequest}

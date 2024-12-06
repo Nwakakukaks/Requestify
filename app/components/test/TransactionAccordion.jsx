@@ -23,6 +23,7 @@ import { useEthersV5Provider } from "@/hooks/use-ethers-provider";
 import { currencies } from "@/hooks/currency";
 import { storageChains } from "@/hooks/storage-chain";
 import { useToast } from "../ui/use-toast";
+import { File } from "lucide-react";
 
 const CustomAccordion = styled(Accordion)({
   margin: "10px 0",
@@ -96,7 +97,7 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2000);
+    }, 3000);
 
     return () => clearTimeout(timer);
   }, []);
@@ -109,7 +110,6 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
         return "Completed";
     }
   };
-  
 
   const handleRequestAction = async (request) => {
     console.log("Starting payTheRequest function");
@@ -297,8 +297,7 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={1} md={1}>
                   <div className="accordian-txn-status">
-                  {isCompleted ? "Completed" : "Pending"}
-                  
+                    {isCompleted ? "Completed" : "Pending"}
                   </div>
                 </CustomGridItem>
                 <CustomGridItem item xs={3} sm={2} md={2}>
@@ -309,7 +308,7 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
                         : "waiting-action-btn"
                     }`}
                   >
-                     {isCompleted ? "Closed" : "Sign"}
+                    {isCompleted ? "Closed" : "Sign"}
                   </Button>
                 </CustomGridItem>
               </Grid>
@@ -367,6 +366,19 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
                     <p className="text-sm text-gray-800 break-words">
                       {request.contentData.content.RequestMemo}
                     </p>
+                    {request.contentData.content.Attachment && (
+                      <div className="mt-2 flex justify-center items-center space-x-1">
+                        <File size={16} className="text-blue-500" />
+                        <a
+                          href={request.contentData.content.Attachment}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-600 hover:underline"
+                        >
+                          View Attached Doc
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -393,10 +405,11 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
                   className={` w-full mt-5`}
                   onClick={() => handleRequestAction(request)}
                   disabled={
-                    (address !==
+                    ((address !==
                       request?.contentData?.content?.signer1?.value ??
                       "") &&
-                    (address !== request?.payer?.value ?? "") || isCompleted
+                      (address !== request?.payer?.value ?? "")) ||
+                    isCompleted
                   }
                 >
                   {isCompleted

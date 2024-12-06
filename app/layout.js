@@ -14,7 +14,7 @@ const dm_sans = DM_Sans({
 });
 export const metadata = {
   title: "Requestify",
-  description: "Secure third-party payments",
+  description: "DocSign alternative built on request network.",
 };
 
 export default function RootLayout({ children }) {
