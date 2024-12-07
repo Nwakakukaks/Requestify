@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Requestify 
+
+## The Problem with Contract Management
+
+My friend Janet, a finance professional, faces a constant struggle. Every contract requires her to:
+
+Create the document in DocuSign
+Switch to another platform to process payments
+Return to DocuSign to track the documents
+Coordinate between multiple tools
+Lose time and risk errors in the process
+
+## The Market Reality
+DocuSign processes over 1 billion documents annually across 180+ countries, yet lacks an integrated payment solution. Professionals like Janet are forced to:
+
+Use multiple platforms
+Manually reconcile payments
+Waste hours of administrative tasks
+
+## Introducing Requestify: Contract Management Reimagined 🚀
+
+Requestify is the all-in-one contract management solution powered by Request Network. We've eliminated the complexity of contract creation, signees tracking, and payment processing by building a seamless, blockchain-enabled platform.
+
+## How Requestify Works
+
+1. **Contract Creation**
+   - Select contract type (single/multi-party agreements)
+   - Define signatories and payment terms
+   - Upload document
+   - Set milestone-based payment triggers (coming soon)
+
+2. **Signature Workflow**
+   - Invite signatories
+   - Track signature progress
+   - Automated reminders (coming soon)
+
+3. **Payment Processing With Request Network**
+   - Integrated payment gateway
+   - Support for multiple cryptocurrencies
+   - Instant settlement
+  
+
+## Technical Architecture
+
+- **Blockchain**: Multi-chain
+- **Payment Integration**: Request Network
+- **Frontend**: React.js
+- **Backend**: Node.js
+
+## Roadmap
+
+### Upcoming Features
+- AI-powered contract drafting
+- Automated dispute resolution
+- Global compliance engine
+- And many more!
+
+## Why Requestify?
+
+- First truly integrated contract management platform
+- Eliminates multiple tool dependencies
+- Blockchain security and transparency
+- Instant, fee-free payments
+- Global accessibility
 
 ## Getting Started
 
-First, run the development server:
+1. Sign up at [Requestify](https://requestify-five.vercel.app)
+2. Create your first contract
+3. Add signatories (third-party agreements)
+4. Process payments instantly
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+*Simplifying contracts. Accelerating business.*
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+[Requestify](https://requestify-five.vercel.app)

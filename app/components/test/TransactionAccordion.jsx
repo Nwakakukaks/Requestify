@@ -203,18 +203,18 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
         return;
       }
 
-      // console.log("Checking ERC20 approval");
-      // const _hasErc20Approval = await hasErc20Approval(
-      //   requestData,
-      //   address,
-      //   provider
-      // );
-      // if (!_hasErc20Approval) {
-      //   console.log("Requesting ERC20 approval");
-      //   const approvalTx = await approveErc20(requestData, signer);
-      //   await approvalTx.wait(2);
-      //   console.log("ERC20 approval transaction completed");
-      // }
+      console.log("Checking ERC20 approval");
+      const _hasErc20Approval = await hasErc20Approval(
+        requestData,
+        address,
+        provider
+      );
+      if (!_hasErc20Approval) {
+        console.log("Requesting ERC20 approval");
+        const approvalTx = await approveErc20(requestData, signer);
+        await approvalTx.wait(2);
+        console.log("ERC20 approval transaction completed");
+      }
 
       console.log("Paying the request");
       const paymentTx = await payRequest(requestData, signer);
