@@ -32,11 +32,8 @@ const uploadToCloudinary = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    formData.append("resource_type", "raw");
 
-    const headers = { ...formData.getHeaders() };
-
-    const response = await axios.post(CLOUDINARY_URL, formData, { headers });
+    const response = await axios.post(CLOUDINARY_URL, formData);
     return response.data.url;
   } catch (error) {
     throw new Error("Failed to upload attachment to Cloudinary");
@@ -262,7 +259,7 @@ const SinglePartyRequest: React.FC = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-              Upload Document (Optional)
+                Upload Document (Optional)
               </label>
               <Input
                 type="file"
@@ -357,8 +354,6 @@ const SinglePartyRequest: React.FC = () => {
                 ))}
               </select>
             </div>
-
-          
 
             <Button
               onClick={createRequest}

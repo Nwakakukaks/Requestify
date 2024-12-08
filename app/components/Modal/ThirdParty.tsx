@@ -23,20 +23,17 @@ import axios from "axios";
 import FormData from "form-data";
 import fs from "fs";
 
-const CLOUD_NAME = "your_cloud_name";
-const UPLOAD_PRESET = "your_upload_preset";
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+const CLOUD_NAME = "dgz4c3ahz";
+const UPLOAD_PRESET = "mont_uploads";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 const uploadToCloudinary = async (file: File) => {
   try {
     const formData = new FormData();
     formData.append("file", file);
     formData.append("upload_preset", UPLOAD_PRESET);
-    formData.append("resource_type", "raw");
 
-    const headers = { ...formData.getHeaders() };
-
-    const response = await axios.post(CLOUDINARY_URL, formData, { headers });
+    const response = await axios.post(CLOUDINARY_URL, formData);
     return response.data.url;
   } catch (error) {
     throw new Error("Failed to upload attachment to Cloudinary");
