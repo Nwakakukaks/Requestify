@@ -23,9 +23,9 @@ import axios from "axios";
 import FormData from "form-data";
 import fs from "fs";
 
-const CLOUD_NAME = "your_cloud_name";
-const UPLOAD_PRESET = "your_upload_preset";
-const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
+const CLOUD_NAME = "dgz4c3ahz";
+const UPLOAD_PRESET = "mont_uploads";
+const CLOUDINARY_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
 const uploadToCloudinary = async (file: File) => {
   try {
