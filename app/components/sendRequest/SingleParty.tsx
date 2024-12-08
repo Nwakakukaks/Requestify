@@ -225,7 +225,7 @@ const SinglePartyRequest: React.FC = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Single Party Request</CardTitle>
+          <CardTitle>Single-Party Contract</CardTitle>
           <p className="text-xs text-gray-700">
             Suitable for contract agreements and single point payments. Does not
             require a third-party signer.

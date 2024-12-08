@@ -219,13 +219,13 @@ const TransactionTypes = () => {
       <div className="mt-16">
         <div className="container-parent">
           <div className="flex flex-col-reverse gap-6 md:gap-0 md:flex-row  items-center justify-between pb-0 md:pb-[24px] px-[24px]">
-            <h1 className="reqheader2">All Requests</h1>
+            <h1 className="reqheader2">All Contracts</h1>
             <Link
               href="/send-request"
               className="bg-[#29FF81] text-black font-bold py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center"
             >
               <Send className="w-5 h-5 text-black" />
-              <span className="ml-2">New Request</span>
+              <span className="ml-2">New Contract</span>
             </Link>
           </div>
 

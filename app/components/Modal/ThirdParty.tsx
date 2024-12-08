@@ -242,10 +242,10 @@ const ThirdPartyRequest: React.FC = () => {
     <div className="flex justify-center items-center min-h-screen bg-gray-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Third Party Request</CardTitle>
+          <CardTitle>Third-Party Contract</CardTitle>
           <p className="text-xs text-gray-700">
             Attach a third-party signer as an intermediary to preview and
-            confirm request before request is paid.
+            confirm request before contract is paid.
           </p>
         </CardHeader>
         <CardContent>

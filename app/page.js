@@ -56,17 +56,17 @@ export default function LandingPage() {
     {
       icon: <Shield className="w-8 h-8 text-black" />,
       title: "Secure Digital Agreements",
-      description: "Cryptographically signed and verified blockchain-based document requests with multi-party consent mechanisms."
+      description: "Cryptographically signed and verified blockchain-based contract agreements with multi-party consent mechanisms."
     },
     {
       icon: <RefreshCw className="w-8 h-8 text-black" />,
       title: "Flexible Signing Workflows", 
-      description: "Support for single-party and multi-party document requests, enabling complex approval processes with customizable signers."
+      description: "Support for single-party and multi-party contract agreements, enabling complex approval processes with customizable signers."
     },
     {
       icon: <Zap className="w-8 h-8 text-black" />,
       title: "Immutable Transaction Records",
-      description: "Every document request and signature is permanently recorded on the blockchain, providing transparent and tamper-proof audit trails."
+      description: "Every contract and signature is permanently recorded on the blockchain, providing transparent and tamper-proof audit trails."
     },
    
   ];
@@ -75,7 +75,7 @@ export default function LandingPage() {
   const howHSWorks = [
     {
       title: "1. Request Creation",
-      description: "Initiate a document request by defining signers, terms, and required confirmations."
+      description: "Initiate a contract by defining signers, terms, and required confirmations."
     },
     {
       title: "2. Collaborative Signing",
@@ -189,7 +189,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1 }}
                 >
-                 Decentralized Document Signing
+                 Everything you need to agree
                 </motion.h2>
                 <motion.p
                   className="text-xl md:text-2xl mb-8 text-left text-gray-600 max-w-3xl"
@@ -197,7 +197,7 @@ export default function LandingPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 1, delay: 0.3 }}
                 >
-                   Request Network enables secure, verifiable digital agreements with multi-party blockchain signatures. Streamline your document workflows with cryptographic trust.
+                   Send, sign, manage and pay all your contracts for free powered by Request Network.
                 </motion.p>
                 <motion.div
                   className="flex flex-col sm:flex-row justify-start items-center gap-4"
@@ -340,7 +340,7 @@ export default function LandingPage() {
           <ScrollReveal>
             <section className="cta container mx-auto px-4 py-24 text-center flex flex-col items-center justify-center">
               <h3 className="text-4xl font-bold mb-6 text-gray-900">
-              Transform Your Document Signing Process
+              Transform Your Contract Signing Process
               </h3>
               <p className="text-xl mb-8 text-gray-600 max-w-2xl mx-auto">
               Join the future of secure, transparent, and efficient digital agreements. Experience blockchain-powered document signing that ensures trust, compliance, and simplicity.
@@ -355,7 +355,7 @@ export default function LandingPage() {
             </section>
           </ScrollReveal>
 
-          <Marquee />
+          {/* <Marquee /> */}
         </main>
 
         <footer className="bg-black text-white py-12">
@@ -380,7 +380,7 @@ export default function LandingPage() {
                 </div>
               </Link>
               <p className="text-gray-400 text-center max-w-md">
-              Revolutionizing digital agreements with blockchain-powered signatures. Secure, verifiable, and efficient document signing for the decentralized era.
+              Revolutionizing digital agreements with Request Network payments. Secure, verifiable, and efficient contract management.
               </p>
               <div className="mt-8 text-sm text-gray-400">
                 © 2024 Requestify. All rights reserved.

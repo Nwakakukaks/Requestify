@@ -255,9 +255,9 @@ const TransactionAccordion = ({ transactions, isCompleted }) => {
         <CustomAccordion>
           <CustomAccordionSummary>
             <div style={{ textAlign: "center", width: "100%" }}>
-              No requests found for this address.
+              No created contracts found for this address.
               <div style={{ marginTop: "10px" }}>
-                To start a new request, please click on the "Initiate Request"
+                To start a new contract, please click on the "New Contract"
                 button located in the top right corner.
               </div>
             </div>
