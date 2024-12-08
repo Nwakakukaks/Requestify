@@ -140,10 +140,18 @@ const TransactionTypes = () => {
         );
 
         const queue = sortedRequests.filter(
-          (request) => request.state === "created" && !request.isCompleted
+          (request) =>
+            (request.contentData.content.RequestType === "Single-Party" ||
+              request.contentData.content.RequestType === "Third-Party") &&
+            request.state === "created" &&
+            !request.isCompleted
         );
+
         const completed = sortedRequests.filter(
-          (request) => request.isCompleted
+          (request) =>
+            (request.contentData.content.RequestType === "Single-Party" ||
+              request.contentData.content.RequestType === "Third-Party") &&
+            request.isCompleted
         );
 
         for (const request of queue) {
@@ -160,7 +168,6 @@ const TransactionTypes = () => {
 
         setQueueRequests(queue);
         setCompletedRequests(completed);
-      
       } catch (error) {
         console.error("Failed to fetch requests:", error);
         toast.error("Failed to fetch requests");
